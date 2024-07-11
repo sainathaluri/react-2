@@ -1,0 +1,92 @@
+//https methods
+//Get - to get the data
+//post - to create a new data
+//put - to edit existing data
+//delete - to delete the data
+
+
+
+export const loginUser = async (email, password, onLogin, navigate) => {
+  const apiUrl = process.env.REACT_APP_API_URL;
+
+  try {
+    const response = await fetch(`${apiUrl}/auth/authenticate`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (response.status === 403) {
+      return "Invalid Credentials!";
+    } else {
+      const data = await response.json();
+      const { role, access_token, id, tempPassword } = data;
+
+      sessionStorage.setItem("token", access_token);
+      sessionStorage.setItem("role", role);
+      sessionStorage.setItem("id", id);
+      sessionStorage.setItem("tempPassword", tempPassword);
+
+      if (tempPassword === true) {
+        console.log("Role:", role);
+        console.log("Temporary Password:", tempPassword);
+        onLogin(role);
+        navigate(`/change-password/${id}`);
+      } else {
+        onLogin(role);
+        navigate("/");
+      }
+    }
+  } catch (error) {
+    console.error("Error authenticating user:", error);
+    return "An error occurred while logging in.";
+  }
+};
+
+API CALL USING Axios
+
+import axios from 'axios';
+
+async function authenticateUser(username, password) {
+    const url = '/auth/authenticate';
+
+    // Data to be sent in the request body
+    const data = {
+        username: username,
+        password: password
+    };
+
+    try {
+        // Making the API call using Axios
+        const response = await axios.post(url, data, {
+            headers: {
+                'Content-Type': 'application/json', // Specifying the content type
+            }
+        });
+
+        // Check if the request was successful
+        if (response.status === 200) {
+            const result = response.data;
+
+            // Assuming the token is in the 'token' field of the response
+            const token = result.token;
+
+            // Store the token in local storage or cookies for later use
+            localStorage.setItem('authToken', token);
+
+            console.log('Authentication successful:', result);
+            // You can redirect to the login page or handle further actions here
+        } else {
+            // Handle errors if the response was not successful
+            console.error('Authentication failed:', response.data);
+        }
+    } catch (error) {
+        // Handle network or other errors
+        console.error('Error occurred during authentication:', error);
+    }
+}
+
+// Example usage
+authenticateUser('yourUsername', 'yourPassword');
